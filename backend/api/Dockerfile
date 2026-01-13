@@ -6,11 +6,13 @@ FROM node:25-alpine
 # Default value is set for local development (http://localhost:3001)
 # In Docker, this should be overridden to match the container's exposed port
 ARG VITE_API_BASE_URL=http://localhost:3001
+ARG CORS_PORT_WHITELIST=8080
 
 # Convert ARG to ENV so it's available during the build process
 # Vite requires VITE_* prefixed variables to be available as environment variables
 # during the build step (npm run build) to embed them in the compiled code
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV CORS_PORT_WHITELIST=$CORS_PORT_WHITELIST
 
 COPY . /usr/app/
 

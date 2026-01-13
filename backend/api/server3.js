@@ -304,28 +304,12 @@ async function executeProcedure(originalProcedureBody, procedureBody, params = {
   }
 }
 
+const corsWhitelist = process.env.CORS_PORT_WHITELIST ? 
+  process.env.CORS_PORT_WHITELIST.split(",").map(port => `http://localhost:${port}`) : [];
+
 // Update CORS options
 const corsOptions = {
-  origin: [ 'http://192.168.1.36:8081', 
-            'http://192.168.1.36:8083',
-            'http://192.168.30.14:8081',
-            'http://192.168.30.22:8081',
-            'http://192.168.30.22:8083',
-            'http://192.168.30.22:3000',
-            'http://192.168.30.22:3011',
-            'http://localhost:5173', 
-            'http://127.0.0.1:5173', 
-            'http://localhost:8081', 
-            'http://127.0.0.1:8081',  
-            'http://127.0.0.1:8083', 
-            'http://localhost:8083',  
-            'http://localhost:3000', 
-            'http://localhost:8080', 
-            'http://localhost:3011',
-            'http://localhost:3012',
-            'http://localhost:3013',
-            'http://localhost:9002',
-            'http://192.168.30.14:8083' ],
+  origin: corsWhitelist,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Accept', 'Authorization'],
   credentials: true,
