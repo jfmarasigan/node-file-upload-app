@@ -1,20 +1,49 @@
-version: '3.8'
-
 services:
-  app:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-    container_name: node-file-upload-app
-    image: node-file-upload-app:1.0.0
+  frontend:
+    build: ./frontend
+    image: qc-front
+    container_name: qc-front
     ports:
-      - "3000:3000"
+      - 3000:3000
+  
+  # file upload micro service
+  upload-service:
+    build:
+      context: backend/uploading
+      dockerfile: Dockerfile
+    container_name: quick-claims-uploading
+    image: quick-claims-uploading
+    ports:
+      - "5000:5000"
     env_file:
-      - .env
+      - backend/uploading/.env
     volumes:
       # Used only when STORAGE_TYPE=LOCAL
-      - C:/GENIISYS_WEB/uploads:/data/uploads
+      - C:/GENIISYS_WEB/ATTACHMENTS:/data/uploads
     restart: unless-stopped
 
-volumes:
-  uploads:
+  # generic api micro service
+  api-service:
+    build:
+      context: backend/api
+      dockerfile: Dockerfile
+      args:
+        # Use the service name for internal Docker communication
+        # For browser-based requests, use the host's mapped port
+        # Change this to your actual API URL if using nginx proxy or different setup
+        VITE_API_BASE_URL: http://localhost:5001
+    image: quick-claims-api-service
+    container_name: quick-claims-api-service
+    ports:
+      - 5001:3001
+      - 5002:8080
+
+  # auth micro service
+  # auth-service:
+  #   build:
+  #     context: backend/auth
+  #     dockerfile: Dockerfile
+  #   image: quick-claims-auth-service
+  #   container_name: quick-claims-auth-service
+  #   ports:
+  #     - 5002:5002

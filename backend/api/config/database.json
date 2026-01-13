@@ -1,0 +1,8 @@
+{
+  "type": "oracle",
+  "host": "DANIEL-CPI",
+  "port": "1521",
+  "username": "CPI",
+  "password": "CPI12345!",
+  "database": "BASELOC"
+}

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: node-file-upload-app
+    image: node-file-upload-app:1.0.0
+    ports:
+      - "5000:5000"
+    env_file:
+      - .env
+    volumes:
+      # Used only when STORAGE_TYPE=LOCAL
+      - C:/GENIISYS_WEB/ATTACHMENTS:/data/uploads
+    restart: unless-stopped

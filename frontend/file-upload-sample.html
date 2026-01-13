@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staged File Upload</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; padding: 20px; }
+        .box { max-width: 500px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .staged-item { display: flex; justify-content: space-between; background: #eef2f3; padding: 10px; margin-top: 5px; border-radius: 4px; font-size: 0.9rem; }
+        input, button { display: block; width: 100%; margin-bottom: 10px; padding: 8px; box-sizing: border-box; }
+        button { cursor: pointer; font-weight: bold; }
+        #uploadAllBtn { background: #27ae60; color: white; border: none; margin-top: 20px; }
+        #addFileBtn { background: #3498db; color: white; border: none; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h3>1. Add a File</h3>
+        <input type="text" id="claimId" placeholder="Claim ID">
+        <input type="text" id="docCode" placeholder="Document Code">
+        <input type="file" id="fileInput">
+        <button id="addFileBtn">Add to List</button>
+    </div>
+
+    <div class="box">
+        <h3>2. Staged Files</h3>
+        <div id="fileList"><i>No files added yet...</i></div>
+        <button id="uploadAllBtn" style="display:none;">Upload All Staged Files</button>
+    </div>
+
+    <script>
+        // THIS IS YOUR VARIABLE
+        let stagedFiles = [];
+
+        const addFileBtn = document.getElementById('addFileBtn');
+        const uploadAllBtn = document.getElementById('uploadAllBtn');
+        const fileList = document.getElementById('fileList');
+
+        // Capture data and store in the variable
+        addFileBtn.addEventListener('click', () => {
+            const id = document.getElementById('claimId').value;
+            const code = document.getElementById('docCode').value;
+            const file = document.getElementById('fileInput').files[0];
+
+            if (!id || !code || !file) {
+                alert("Please fill in all fields and select a file.");
+                return;
+            }
+
+            // Create the object and push to our array
+            const fileEntry = { claimId: id, docCode: code, fileObject: file };
+            stagedFiles.push(fileEntry);
+
+            // Update UI
+            renderList();
+            
+            // Clear inputs for next file
+            document.getElementById('claimId').value = '';
+            document.getElementById('docCode').value = '';
+            document.getElementById('fileInput').value = '';
+        });
+
+        function renderList() {
+            if (stagedFiles.length === 0) {
+                fileList.innerHTML = '<i>No files added yet...</i>';
+                uploadAllBtn.style.display = 'none';
+                return;
+            }
+
+            uploadAllBtn.style.display = 'block';
+            fileList.innerHTML = stagedFiles.map((item, index) => `
+                <div class="staged-item">
+                    <span><strong>${item.claimId}</strong> (${item.docCode}) - ${item.fileObject.name}</span>
+                    <button onclick="removeItem(${index})" style="width:auto; margin:0; padding:2px 10px;">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        function removeItem(index) {
+            stagedFiles.splice(index, 1);
+            renderList();
+        }
+
+        // ACCESS THE VARIABLE AND UPLOAD
+        // uploadAllBtn.addEventListener('click', async () => {
+        //     const formData = new FormData();
+
+        //     // Loop through our variable and append to FormData
+        //     stagedFiles.forEach((item, index) => {
+        //         formData.append(`file_${index}`, item.fileObject);
+        //         formData.append(`claimId_${index}`, item.claimId);
+        //         formData.append(`docCode_${index}`, item.docCode);
+        //     });
+
+        //     console.log("Final Variable Data:", stagedFiles);
+
+        //     try {
+        //         // Example URL: change this to your actual endpoint
+        //         /*
+        //         const response = await fetch('https://your-api.com/upload', {
+        //             method: 'POST',
+        //             body: formData
+        //         });
+        //         const result = await response.json();
+        //         alert("Upload Successful!");
+        //         */
+        //         alert("Check your console! The 'stagedFiles' variable was successfully packaged into FormData.");
+        //     } catch (error) {
+        //         console.error("Upload failed", error);
+        //     }
+        // });
+
+        uploadAllBtn.addEventListener('click', async () => {
+            const formData = new FormData();
+
+            // 1. Create an array to hold just the text-based metadata
+            const metadata = stagedFiles.map(item => ({
+                claimId: item.claimId,
+                clmDocCd: item.docCode,
+                userId: "CPI",
+                docSbmttdDt: "01-09-2026",
+                fileName: item.fileObject.name
+            }));
+
+            // 2. Append the metadata as a JSON string
+            // Your Node app will read this via req.body.metadata
+            formData.append('metadata', JSON.stringify(metadata));
+
+            // 3. Append the files separately
+            // Your Node app (using Multer or similar) will read these via req.files
+            stagedFiles.forEach((item, index) => {
+                // We use the same key 'files' so they appear as an array in req.files
+                formData.append('files', item.fileObject);
+            });
+
+            // --- EXECUTE UPLOAD ---
+            try {
+                const response = await fetch('http://localhost:3000/files/upload', {
+                    method: 'POST',
+                    body: formData // No headers needed, browser sets Content-Type
+                });
+                
+                if (response.ok) {
+                    alert("Upload successful!");
+                    stagedFiles = []; // Clear local variable
+                    renderList();     // Refresh UI
+                }
+            } catch (error) {
+                console.error("Upload error:", error);
+            }
+        });
+    </script>
+</body>
+</html>

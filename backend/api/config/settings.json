@@ -1,0 +1,6 @@
+{
+  "apiLimits": true,
+  "caching": true,
+  "logging": true,
+  "timeout": "30"
+}
